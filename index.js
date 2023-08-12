@@ -13,18 +13,17 @@ const WSServer = require('express-ws')(app)
 const aWss = WSServer.getWss();
 
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = ['https://paint-next-express.vercel.app'];
+const allowedOrigins = ['http://localhost:3000','https://paint-next-express.vercel.app'];
 
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-}));
+app.use(cors());
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*"); // или конкретный домен
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // добавьте методы, которые используются в вашем приложении
+  next();
+});
+
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
