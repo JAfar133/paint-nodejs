@@ -13,7 +13,7 @@ const WSServer = require('express-ws')(app)
 const aWss = WSServer.getWss();
 
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = ['http://localhost:3000'];
+const allowedOrigins = ['http://localhost:3000','https://paint-next-express.vercel.app/'];
 
 
 app.use(cors({
