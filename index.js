@@ -16,10 +16,6 @@ const aWss = WSServer.getWss();
 
 const PORT = process.env.PORT || 5000;
 
-const options = {
-  key: fs.readFileSync('server.key'),
-  cert: fs.readFileSync('server.crt')
-};
 
 app.use(cors());
 app.use((req, res, next) => {
@@ -28,6 +24,9 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // добавьте методы, которые используются в вашем приложении
   next();
 });
+
+
+app.use(cors());
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
@@ -39,8 +38,8 @@ app.use("/", userRouter);
 const start = async () => {
   try {
     await mongoose.connect(process.env.MONGO_CONNECTION);
-    const server = https.createServer(options, app); // Используйте HTTPS-сервер
-    server.listen(PORT, () => console.log(`server started on port ${PORT}`));
+    // const server = https.createServer(options, app); // Используйте HTTPS-сервер
+    app.listen(PORT, () => console.log(`server started on port ${PORT}`));
   } catch (e) {
     console.log(e);
   }
