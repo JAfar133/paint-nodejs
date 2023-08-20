@@ -4,7 +4,7 @@ const authRouter = require('./authRouter');
 const userRouter = require('./userRouter');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const https = require('https'); // Добавьте этот импорт
+const https = require('https');
 
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -34,7 +34,7 @@ app.use("/", userRouter);
 const start = async () => {
   try {
     await mongoose.connect(process.env.MONGO_CONNECTION);
-    // const server = https.createServer(options, app); // Используйте HTTPS-сервер
+    // const server = https.createServer(options, app);
     app.listen(PORT, () => console.log(`server started on port ${PORT}`));
   } catch (e) {
     console.log(e);
