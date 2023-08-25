@@ -53,6 +53,9 @@ app.ws('/', (ws, req) => {
       case "connection":
         connectionHandler(ws, msg);
         break;
+      case "message":
+        messageHandler(ws, msg);
+        break;
       default:
         broadcastConnection(ws, msg);
         break;
@@ -62,10 +65,22 @@ app.ws('/', (ws, req) => {
     userDisconnected(ws);
   });
 });
+
+const messageHandler = (ws, msg) =>{
+  msg.message = {
+    id: `fa${(+new Date()).toString(8)}`,
+    username: msg.username,
+    text: msg.message,
+    date: Date.now(),
+    color: msg.color
+  };
+  broadcastConnection(ws, msg)
+  
+}
 const userDisconnected = ws => {
   console.log(`User ${ws.id} disconnected`);
   if(ws.id) {
-    const [id, username] = ws.id.split("+")
+    const [id, username] = ws.id.split("//")
     clients.get(id).delete(username);
     broadcastConnection(ws, {
       id: id,
@@ -76,7 +91,7 @@ const userDisconnected = ws => {
   
 };
 const connectionHandler = (ws, msg) => {
-  ws.id = msg.id.toString().concat("+").concat(msg.username)
+  ws.id = msg.id.toString().concat("//").concat(msg.username)
   if (clients.has(msg.id)) {
     const client = clients.get(msg.id)
     if(msg.username){
@@ -91,16 +106,22 @@ const connectionHandler = (ws, msg) => {
     }
     clients.set(msg.id, users)
   }
+  msg.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
   
   broadcastConnection(ws, msg);
 };
 const broadcastConnection = (ws, msg) => {
   const localClient = clients.get(msg.id)
+  const clientsAlreadySend = new Set()
   aWss.clients.forEach(client => {
     
-    if (client.id && client.id.split("+")[0] === msg.id) {
+    if (client.id && client.id.split("//")[0] === msg.id) {
       msg.count = localClient.size;
-      client.send(JSON.stringify(msg));
+      msg.users = Array.from(localClient);
+      if(!clientsAlreadySend.has(client.id)){
+        client.send(JSON.stringify(msg));
+      }
+      clientsAlreadySend.add(client.id)
     }
   });
 };
