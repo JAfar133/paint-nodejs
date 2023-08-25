@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const authRouter = require('./authRouter');
 const userRouter = require('./userRouter');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const https = require('https');
 
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -46,6 +44,8 @@ const start = async () => {
 };
 start();
 
+const clients = new Map();
+
 app.ws('/', (ws, req) => {
   ws.on('message', msg => {
     msg = JSON.parse(msg);
@@ -53,35 +53,46 @@ app.ws('/', (ws, req) => {
       case "connection":
         connectionHandler(ws, msg);
         break;
-      case "draw":
-      case "clear":
-      case "draw_url":
+      default:
         broadcastConnection(ws, msg);
         break;
-      
     }
   });
+  ws.on('close', () => {
+    userDisconnected(ws);
+  });
 });
-
+const userDisconnected = ws => {
+  console.log(`User ${ws.id} disconnected`);
+};
 const connectionHandler = (ws, msg) => {
-  ws.id = msg.id;
+  ws.id = msg.id
+  if (clients.has(ws.id)) {
+    const client = clients.get(ws.id)
+    if(msg.username){
+      client.add(msg.username)
+    }
+    clients.set(ws.id, client);
+  }
+  else {
+    const users = new Set()
+    if(msg.username){
+      users.add(msg.username)
+    }
+    clients.set(ws.id, users)
+  }
+  
+  console.log(clients)
+  
   broadcastConnection(ws, msg);
 };
 const broadcastConnection = (ws, msg) => {
+  const localClient = clients.get(msg.id)
+  
   aWss.clients.forEach(client => {
     if (client.id === msg.id) {
-      msg.count = getConnectedCount(client.id);
+      msg.count = localClient.size;
       client.send(JSON.stringify(msg));
     }
   });
-};
-
-const getConnectedCount = (targetId) => {
-  let count = 0;
-  aWss.clients.forEach(client => {
-    if (client.id === targetId) {
-      count++;
-    }
-  });
-  return count;
 };
