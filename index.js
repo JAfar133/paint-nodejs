@@ -64,33 +64,41 @@ app.ws('/', (ws, req) => {
 });
 const userDisconnected = ws => {
   console.log(`User ${ws.id} disconnected`);
+  if(ws.id) {
+    const [id, username] = ws.id.split("+")
+    clients.get(id).delete(username);
+    broadcastConnection(ws, {
+      id: id,
+      method: "disconnect",
+      username: username
+    })
+  }
+  
 };
 const connectionHandler = (ws, msg) => {
-  ws.id = msg.id
-  if (clients.has(ws.id)) {
-    const client = clients.get(ws.id)
+  ws.id = msg.id.toString().concat("+").concat(msg.username)
+  if (clients.has(msg.id)) {
+    const client = clients.get(msg.id)
     if(msg.username){
       client.add(msg.username)
     }
-    clients.set(ws.id, client);
+    clients.set(msg.id, client);
   }
   else {
     const users = new Set()
     if(msg.username){
       users.add(msg.username)
     }
-    clients.set(ws.id, users)
+    clients.set(msg.id, users)
   }
-  
-  console.log(clients)
   
   broadcastConnection(ws, msg);
 };
 const broadcastConnection = (ws, msg) => {
   const localClient = clients.get(msg.id)
-  
   aWss.clients.forEach(client => {
-    if (client.id === msg.id) {
+    
+    if (client.id && client.id.split("+")[0] === msg.id) {
       msg.count = localClient.size;
       client.send(JSON.stringify(msg));
     }
