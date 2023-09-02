@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const controller = require('./userController')
-const authMiddleware = require('./middleware/authMiddleware')
+const controller = require('../controllers/userController')
+const authMiddleware = require('../middleware/authMiddleware')
 
 router.post('/image', controller.saveImage)
 router.get('/image', controller.getImage)

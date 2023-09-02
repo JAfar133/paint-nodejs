@@ -1,12 +1,12 @@
 const fs = require('fs')
 const path = require('path')
-const Drawing = require('./models/Drawing')
-const User = require('./models/User')
+const Drawing = require('../models/Drawing')
+const User = require('../models/User')
 class UserController {
   saveImage(req, res) {
     try {
       const data = req.body.img.replace('data:image/png;base64,','')
-      fs.writeFileSync(path.resolve(__dirname,'images', `${req.query.id}.jpg`), data, 'base64')
+      fs.writeFileSync(path.resolve(__dirname,'../images', `${req.query.id}.jpg`), data, 'base64')
       return res.status(200).json({message: "Рисунок сохранен на сервере"})
     }catch (e){
       console.log(e)
@@ -36,7 +36,7 @@ class UserController {
   }
   getImage(req, res) {
     try {
-      const file = fs.readFileSync(path.resolve(__dirname, 'images', `${req.query.id}.jpg`))
+      const file = fs.readFileSync(path.resolve(__dirname, '../images', `${req.query.id}.jpg`))
       const data = `data:image/png;base64,` + file.toString('base64')
       res.json(data)
     } catch (e) {

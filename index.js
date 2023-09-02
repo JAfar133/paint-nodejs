@@ -1,25 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const authRouter = require('./authRouter');
-const userRouter = require('./userRouter');
+const authRouter = require('./routers/authRouter');
+const userRouter = require('./routers/userRouter');
+const messageRouter = require('./routers/messageRouter');
 const bodyParser = require('body-parser');
 
 const cors = require('cors');
 const dotenv = require('dotenv');
+const WebSocketController = require("./controllers/WebSocketController");
 dotenv.config();
 
 const app = express();
-const WSServer = require('express-ws')(app);
-const aWss = WSServer.getWss();
 
 const PORT = process.env.PORT || 5000;
 
 
 app.use(cors());
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // или конкретный домен
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // добавьте методы, которые используются в вашем приложении
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   next();
 });
 
@@ -31,6 +31,7 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(express.json());
 app.use("/auth", authRouter);
+app.use("/message", messageRouter);
 app.use("/", userRouter);
 
 const start = async () => {
@@ -44,84 +45,4 @@ const start = async () => {
 };
 start();
 
-const clients = new Map();
-
-app.ws('/', (ws, req) => {
-  ws.on('message', msg => {
-    msg = JSON.parse(msg);
-    switch (msg.method) {
-      case "connection":
-        connectionHandler(ws, msg);
-        break;
-      case "message":
-        messageHandler(ws, msg);
-        break;
-      default:
-        broadcastConnection(ws, msg);
-        break;
-    }
-  });
-  ws.on('close', () => {
-    userDisconnected(ws);
-  });
-});
-
-const messageHandler = (ws, msg) =>{
-  msg.message = {
-    id: `fa${(+new Date()).toString(8)}`,
-    username: msg.username,
-    text: msg.message,
-    date: Date.now(),
-    color: msg.color
-  };
-  broadcastConnection(ws, msg)
-  
-}
-const userDisconnected = ws => {
-  console.log(`User ${ws.id} disconnected`);
-  if(ws.id) {
-    const [id, username] = ws.id.split("//")
-    clients.get(id).delete(username);
-    broadcastConnection(ws, {
-      id: id,
-      method: "disconnect",
-      username: username
-    })
-  }
-  
-};
-const connectionHandler = (ws, msg) => {
-  ws.id = msg.id.toString().concat("//").concat(msg.username)
-  if (clients.has(msg.id)) {
-    const client = clients.get(msg.id)
-    if(msg.username){
-      client.add(msg.username)
-    }
-    clients.set(msg.id, client);
-  }
-  else {
-    const users = new Set()
-    if(msg.username){
-      users.add(msg.username)
-    }
-    clients.set(msg.id, users)
-  }
-  msg.color = `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`;
-  
-  broadcastConnection(ws, msg);
-};
-const broadcastConnection = (ws, msg) => {
-  const localClient = clients.get(msg.id)
-  const clientsAlreadySend = new Set()
-  aWss.clients.forEach(client => {
-    
-    if (client.id && client.id.split("//")[0] === msg.id) {
-      msg.count = localClient.size;
-      msg.users = Array.from(localClient);
-      if(!clientsAlreadySend.has(client.id)){
-        client.send(JSON.stringify(msg));
-      }
-      clientsAlreadySend.add(client.id)
-    }
-  });
-};
+const websocket = new WebSocketController(app)
