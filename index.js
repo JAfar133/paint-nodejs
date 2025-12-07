@@ -12,18 +12,7 @@ dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT || 5045;
-
-
-// app.use(cors());
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "https://for-you3.ru");
-//   res.header("Access-Control-Allow-Credential", "true");
-//   res.header("Access-Control-Allow-Headers", "Origin, X-Api-Key, X-Requested-With, Content-Type, Accept, Authorization");
-//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//   next();
-// });
-
+const PORT = 8000;
 
 app.use(cors());
 
@@ -39,7 +28,11 @@ const start = async () => {
   try {
     await mongoose.connect(process.env.MONGO_CONNECTION);
     // const server = https.createServer(options, app);
-    app.listen(PORT, () => console.log(`server started on port ${PORT}`));
+    app.listen(PORT, () => {
+        console.log(`server started on port ${PORT}`)
+        console.log(`GALLERY_PATH ${process.env.GALLERY_PATH}`)
+        console.log(`IMAGES_PATH ${process.env.IMAGES_PATH}`)
+    });
   } catch (e) {
     console.log(e);
   }
