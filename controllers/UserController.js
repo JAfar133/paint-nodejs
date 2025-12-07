@@ -2,14 +2,8 @@ const fs = require('fs')
 const path = require('path')
 const Drawing = require('../models/Drawing')
 const User = require('../models/User')
-
-const GALLERY_PATH = process.env.GALLERY_PATH
-    ? path.resolve(__dirname, process.env.GALLERY_PATH)
-    : path.resolve(__dirname, '../gallery')
-
-const IMAGE_PATH = process.env.IMAGE_PATH
-    ? path.resolve(__dirname, process.env.IMAGES_PATH)
-    : path.resolve(__dirname, '../images')
+const GALLERY_PATH = path.resolve(__dirname,'../gallery')
+const IMAGE_PATH = path.resolve(__dirname,'../images')
 
 class UserController {
   saveImage(req, res) {
